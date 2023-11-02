@@ -6,19 +6,52 @@ export default class Demo extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image('logo', 'assets/phaser3-logo.png');
+    this.load.image('background', 'assets/backgrounds/glacial_mountains.png');
+    this.load.spritesheet('player', 'assets/player/player-run.png', {
+      frameWidth: 32,
+      frameHeight: 48
+    });
   }
 
   create() {
-    const logo = this.add.image(400, 70, 'logo');
+    // Add the background image
+    this.add.image(0, 0, 'background').setOrigin(0, 0);
 
-    this.tweens.add({
-      targets: logo,
-      y: 350,
-      duration: 1500,
-      ease: 'Sine.inOut',
-      yoyo: true,
+    // Add the player sprite
+    const player = this.physics.add.sprite(100, 450, 'player');
+    player.setCollideWorldBounds(true);
+
+    // Create the player animation
+    this.anims.create({
+      key: 'run',
+      frames: this.anims.generateFrameNumbers('player', { start: 0, end: 7 }),
+      frameRate: 10,
       repeat: -1
+    });
+
+    // Set up the player controls
+    const cursors = this.input.keyboard.createCursorKeys();
+
+    // Move the player left and right
+    cursors.left.on('down', () => {
+      player.setVelocityX(-160);
+      player.anims.play('run', true);
+      player.flipX = true;
+    });
+    cursors.right.on('down', () => {
+      player.setVelocityX(160);
+      player.anims.play('run', true);
+      player.flipX = false;
+    });
+    cursors.left.on('up', () => {
+      player.setVelocityX(0);
+      player.anims.stop('run');
+      player.setTexture('player', 0);
+    });
+    cursors.right.on('up', () => {
+      player.setVelocityX(0);
+      player.anims.stop('run');
+      player.setTexture('player', 0);
     });
   }
 }
