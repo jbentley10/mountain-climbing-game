@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import Player from '../objects/Player';
 import Background from '../objects/Background';
+import Obstacle from '../objects/Obstacle';
 
 export default class Game extends Phaser.Scene {
   player: Player;
@@ -11,6 +12,8 @@ export default class Game extends Phaser.Scene {
   isPaused: boolean;
   originalBackgroundSpeeds: { [key: string]: number };
   debugText: Phaser.GameObjects.Text;
+  obstacles: Phaser.Physics.Arcade.Group;
+  gameOverText: Phaser.GameObjects.Text;
 
   preload() {
     // Load backgrounds
@@ -19,6 +22,8 @@ export default class Game extends Phaser.Scene {
     this.load.image('clouds_mg_1', 'assets/backgrounds/clouds_mg_1.png');
     this.load.image('clouds_bg', 'assets/backgrounds/clouds_bg.png');
     this.load.image('glacial_mountains', 'assets/backgrounds/glacial_mountains.png');
+    // Load the obstacle
+    this.load.image('obstacle', 'assets/obstacle.png');
     // Load the ground
     this.load.image('ground', 'assets/ground.png');
     // Load the player
@@ -65,6 +70,13 @@ export default class Game extends Phaser.Scene {
     // Add a collider between the player and the ground
     this.physics.add.collider(this.player.sprite, this.ground);
 
+    // Create the obstacles group
+    this.obstacles = this.physics.add.group();
+
+    // Create the "Game Over" text
+    this.gameOverText = this.add.text(400, 300, 'Game Over', { fontSize: '32px', color: '#ff0000' }).setOrigin(0.5);
+    this.gameOverText.visible = false;
+
     // Initialize the paused state
     this.isPaused = false;
 
@@ -99,6 +111,27 @@ export default class Game extends Phaser.Scene {
 
     // Create the debug text
     this.debugText = this.add.text(10, 10, '', { color: '#00ff00' });
+
+    // Spawn a new obstacle every 2 seconds
+    this.time.addEvent({
+      delay: 2000,
+      callback: this.spawnObstacle,
+      callbackScope: this,
+      loop: true
+    });
+  }
+
+  spawnObstacle() {
+    // Create a new obstacle at the right edge of the screen
+    const obstacle = new Obstacle(this, 800, 550, 1);
+    this.obstacles.add(obstacle.sprite);
+
+    // End the game when the player collides with an obstacle
+    this.physics.add.collider(this.player.sprite, obstacle.sprite, this.endGame, null, this);
+    // Add a collider for the obstacle and the ground
+    this.physics.add.collider(obstacle.sprite, this.ground);
+    // Make the obstacle move to the left once it touches the ground
+    
   }
 
   update() {
@@ -120,11 +153,26 @@ export default class Game extends Phaser.Scene {
       }
     });
 
+    // Update the obstacles
+    Phaser.Actions.Call(this.obstacles.getChildren(), function(obstacle: any) {
+      obstacle.update();
+    }, this);
+
     // Update the debug text
     this.debugText.setText([
       `Player Velocity X: ${this.player.sprite.body.velocity.x}`,
       `Player Velocity Y: ${this.player.sprite.body.velocity.y}`,
       // Add more debug information here...
     ]);
+  }
+
+  endGame() {
+    // Stop the game
+    this.physics.pause();
+    this.player.sprite.anims.stop();
+    // Stop other game objects...
+
+    // Show the "Game Over" text
+    this.gameOverText.visible = true;
   }
 }
