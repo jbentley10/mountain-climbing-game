@@ -1,5 +1,8 @@
 import Phaser from 'phaser';
 
+let cursors;
+let player;
+
 export default class Demo extends Phaser.Scene {
   constructor() {
     super('GameScene');
@@ -18,7 +21,7 @@ export default class Demo extends Phaser.Scene {
     this.add.image(0, 0, 'background').setOrigin(0, 0);
 
     // Add the player sprite
-    const player = this.physics.add.sprite(100, 450, 'player');
+    player = this.physics.add.sprite(100, 450, 'player');
     player.setCollideWorldBounds(true);
 
     // Create the player animation
@@ -30,8 +33,10 @@ export default class Demo extends Phaser.Scene {
     });
 
     // Set up the player controls
-    const cursors = this.input.keyboard.createCursorKeys();
-
+    cursors = this.input.keyboard.createCursorKeys();
+  }
+  
+  update() {
     // Move the player left and right
     cursors.left.on('down', () => {
       player.setVelocityX(-160);
